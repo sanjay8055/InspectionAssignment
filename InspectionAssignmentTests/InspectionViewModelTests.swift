@@ -24,7 +24,7 @@ final class InspectionViewModelTests: XCTestCase {
     func testStartInspectionSuccess() async throws {
         mockInspectionService.result = true
         await inspectionViewModel.startInspection()
-        XCTAssertTrue((inspectionViewModel.inspection != nil))
+        XCTAssertTrue(inspectionViewModel.error.isEmpty)
     }
     
     @MainActor

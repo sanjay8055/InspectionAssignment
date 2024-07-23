@@ -12,3 +12,6 @@ struct User: Codable {
     let password: String
 }
 
+struct Inspection: Codable {
+    let inspection: Inspections?
+}

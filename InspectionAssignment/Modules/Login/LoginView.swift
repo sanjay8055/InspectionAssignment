@@ -11,7 +11,7 @@ struct LoginView: View {
    
     @State var email: String = "Test1@mail.com"
     @State var password: String = "test123"
-    @StateObject private var loginViewModel = LoginViewModel()
+    @ObservedObject private var loginViewModel = LoginViewModel()
     @State var isLogin: Bool = true
 
     var body: some View {

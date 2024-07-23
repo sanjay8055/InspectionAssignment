@@ -11,18 +11,24 @@ import Foundation
 class InspectionViewModel: ObservableObject {
     private let inspectionService: InspectionServiceProtocol
     @Published var error: String = ""
-    @Published var inspection: InspectionDetail?
-
+    @Published var inspection: Inspections?
+    let dataController = DataController.instance
+    
     init(inspectionService: InspectionServiceProtocol = InspectionService()) {
         self.inspectionService = inspectionService
     }
     
     func startInspection() async {
-        do {
-            let result = try await inspectionService.startInspections()
-            inspection = result.inspection
-        } catch let error {
-            self.error = error.localizedDescription
+        if let result = dataController.fetchInspections(), result.count > 0 {
+            inspection = result.first
+        } else {
+            do {
+                let result = try await inspectionService.startInspections()
+                inspection = result.inspection
+                saveData()
+            } catch let error {
+                self.error = error.localizedDescription
+            }
         }
     }
     
@@ -35,15 +41,11 @@ class InspectionViewModel: ObservableObject {
     }
     
     var surveyCategories: [Category] {
-        inspection?.survey?.categories ?? []
+        inspection?.survey?.categoriesArray ?? []
     }
     
-    func saveDraftInspection(categoryIndex: Int, questionIndex: Int, choiceId: Int) {
-        if var category = inspection?.survey?.categories?.filter({$0.id == categoryIndex}).first {
-           var questions = category.questions
-            questions[questionIndex].selectedAnswerChoiceId = choiceId
-            category.questions = questions
-        }
+    func saveData() {
+        dataController.saveData()
     }
     
     func submitInspection() async {

@@ -9,7 +9,7 @@ import SwiftUI
 
 struct StartInspectionView: View {
     @State private var inspectionType: String = ""
-    @StateObject private var inspectionViewModel: InspectionViewModel = InspectionViewModel()
+    @ObservedObject private var inspectionViewModel: InspectionViewModel = InspectionViewModel()
     var body: some View {
         NavigationView {
             List(inspectionViewModel.surveyCategories, id: \.id) { category in

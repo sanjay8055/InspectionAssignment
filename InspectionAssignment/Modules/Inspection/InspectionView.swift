@@ -20,12 +20,12 @@ struct InspectionView: View {
     
     var body: some View {
         VStack(alignment: .leading) {
-            Text("Question \(currentQuestionIndex + 1) of \(category?.questions.count ?? 0)")
+            Text("Question \(currentQuestionIndex + 1) of \(category?.questionsArray.count ?? 0)")
                 .font(.headline)
                 .padding(.bottom, 10)
             
-            Text(category?.questions[currentQuestionIndex].name ?? "")
-                .font(.title)
+            Text(category?.questionsArray[currentQuestionIndex].name ?? "")
+                .font(.title2)
                 .padding(.bottom, 20)
             
             QuestionChoiceView
@@ -43,13 +43,18 @@ struct InspectionView: View {
     }
     
     var QuestionChoiceView: some View {
-        ForEach(0..<(category?.questions[currentQuestionIndex].answerChoices.count ?? 0), id: \.self) { index in
+        ForEach(0..<(category?.questionsArray[currentQuestionIndex].answerchoicesArray.count ?? 0), id: \.self) { index in
             Button(action: {
                 selectedOptionIndex = index
             }) {
                 HStack {
-                    Image(systemName: selectedOptionIndex == index ? "largecircle.fill.circle" : "circle")
-                    Text(category?.questions[currentQuestionIndex].answerChoices[index].name ?? "")
+                    Image(systemName: selectedChoice(index: index) ? "largecircle.fill.circle" : "circle")
+                        .onAppear {
+                            if selectedChoice(index: index) {
+                                selectedOptionIndex = index
+                            }
+                        }
+                    Text(category?.questionsArray[currentQuestionIndex].answerchoicesArray[index].name ?? "")
                         .font(.body)
                         .padding(.leading, 5)
                 }
@@ -63,7 +68,7 @@ struct InspectionView: View {
         Button(action: {
             checkAnswer()
         }) {
-            Text(currentQuestionIndex == (category?.questions.count ?? 0) - 1 ? "Submit" : "Next")
+            Text(currentQuestionIndex == (category?.questionsArray.count ?? 0) - 1 ? "Submit" : "Next")
                 .font(.headline)
                 .padding()
                 .frame(maxWidth: .infinity)
@@ -84,26 +89,42 @@ struct InspectionView: View {
     
     func checkAnswer() {
         if let selectedOptionIndex = selectedOptionIndex {
-            inspectionViwModel.saveDraftInspection(categoryIndex: category?.id ?? 0, questionIndex: currentQuestionIndex, choiceId: selectedOptionIndex)
+            category?.questionsArray[currentQuestionIndex].selectedAnswerChoiceId = Int16(selectedOptionIndex)
+            inspectionViwModel.saveData()
             totalScore += getScore()
             nextQuestion()
         }
     }
     
+    func checkifselectedValueExist(question: Questions?) {
+        if let question, question.selectedAnswerChoiceId >= 0 {
+            selectedOptionIndex = Int(question.selectedAnswerChoiceId)
+        }
+    }
+    
     func getScore() -> Double {
-        if let question = category?.questions[currentQuestionIndex] {
-            return question.answerChoices[selectedOptionIndex ?? 0].score ?? 0.0
+        if let question = category?.questionsArray[currentQuestionIndex] {
+            return Double(question.answerchoicesArray[selectedOptionIndex ?? 0].score)
         }
         return 0.0
+    }
+    
+    func selectedChoice(index: Int) -> Bool {
+        if let selectedOptionIndex {
+            return selectedOptionIndex == index
+        }
+        guard let cId = (category?.questionsArray[currentQuestionIndex].selectedAnswerChoiceId), cId >= 0 else {
+            return false
+        }
+        return index == cId
     }
     
     func nextQuestion() {
         currentQuestionIndex += 1
         selectedOptionIndex = nil
-        if currentQuestionIndex >= category?.questions.count ?? 0 {
-            currentQuestionIndex = 0 // Restart quiz or navigate to result screen
+        if currentQuestionIndex >= category?.questionsArray.count ?? 0 {
+            currentQuestionIndex = 0
             showingResult = true
-            
             Task {
                 await inspectionViwModel.submitInspection()
             }

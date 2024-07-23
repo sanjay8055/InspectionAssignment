@@ -8,6 +8,8 @@
 import Foundation
  
 class NetworkManager: NetworkManaging {
+    let dataController = DataController.instance
+
     func fetchData<T: Decodable>(from url: String) async throws -> T {
         guard let url = URL(string: url) else {
             throw URLError(.badURL)
@@ -24,7 +26,10 @@ class NetworkManager: NetworkManaging {
             guard(200..<300).contains(httpResponse.statusCode) else {
                 throw NetworkError.invalidResponse
             }
-            return try JSONDecoder().decode(T.self, from: data)
+            let decoder = JSONDecoder()
+            decoder.dateDecodingStrategy = .iso8601
+            decoder.userInfo[CodingUserInfoKey.managedObjectContext] = dataController.context
+            return try decoder.decode(T.self, from: data)
         } catch let error as DecodingError{
             switch error {
             case .keyNotFound(_, _):
